@@ -42,16 +42,27 @@ void BuddyAllocator::setTotalMemoryLength(int input_size) { // assumes a power o
 char* BuddyAllocator::alloc(int _length) {
     // go to smallest slot possible in free list and search until a free block is found
     int smallest_index = getFreeListIndex(_length);
-    for(int i = smallest_index; i <= largest_block_index; i++) {
+    if(!free_list[smallest_index].empty()) {
+        BlockHeader* block = free_list[smallest_index].back();
+        free_list[smallest_index].remove(block);
+        // return raw block
+        return getRawFromHeader(block);
+    }
+    for(int i = smallest_index + 1; i <= largest_block_index; i++) {
         if(!free_list[i].empty()) {
-            
+            BlockHeader* block = free_list[smallest_index].back();
+            free_list[smallest_index].remove(block);
+            // recursively split block
+            // return raw block
+            return getRawFromHeader(split(block));
         }
     }
+    cout << "attempting to alloc more memory than is available in total." << endl;
+    return NULL;
 }
 
 int BuddyAllocator::free(char* _a) {
-  /* Same here! */
-  delete _a;
+  // get the blockheader, add it to the free list or merge with its buddy in the free list
   return 0;
 }
 

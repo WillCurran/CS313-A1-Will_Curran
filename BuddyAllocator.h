@@ -23,7 +23,7 @@ typedef unsigned int uint;
 
 class BlockHeader {
 public:
-    bool free; // is the memory allocated currently? IS THIS USED?
+//    bool free; // is the memory allocated currently? IS THIS USED?
     unsigned int size; // how big is the entire block?
     BlockHeader* next;
 };
@@ -64,6 +64,18 @@ public:
     bool empty() {
         return head == NULL;
     }
+    
+    BlockHeader* back() {
+        // get the last element in the list
+        if(!head) {
+            return NULL;
+        }
+        BlockHeader* curr = head;
+        while(curr->next) {
+            curr = curr->next;
+        }
+        return curr;
+    }
 };
 
 
@@ -93,6 +105,15 @@ private:
 	BlockHeader* split (BlockHeader* block);
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
+    
+    char* getRawFromHeader(BlockHeader* block);
+    // advance the BlockHeader pointer to its raw memory block
+    
+    BlockHeader* getHeaderFromRaw(char* raw_block);
+    // backtrack from raw memory block pointer to its BlockHeader
+    
+    int getFreeListIndex(int requested_size);
+    // get an index corresponding to a slot in the free_list which could offer enough memory for the user
     
     void setBasicBlockSize(int input_size);
     void setTotalMemoryLength(int input_size);
