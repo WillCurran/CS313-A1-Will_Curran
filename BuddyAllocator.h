@@ -13,17 +13,15 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #define MAX_MEM_INDEX 64
+#define BLOCKHEADER_SIZE 16 // sizeof(BlockHeader obj) = 16
 
 #include <iostream>
 #include <assert.h>
 using namespace std;
-typedef uint uint;
-
-/* declare types as you need */
+typedef uintptr_t pointer_arithmetic_t;
 
 class BlockHeader {
 public:
-//    bool free; // is the memory allocated currently? IS THIS USED?
     uint size; // how big is the entire block?
     BlockHeader* next;
 };
@@ -44,7 +42,7 @@ public:
         }
 	}
 
-	void remove (BlockHeader* b) {  // removes a block from the list, but does not delete it
+	void remove (BlockHeader* b) {  // removes a block from the list if it exists, but does not delete it
         assert(head);
         if(head == b) {
             head = NULL;
@@ -57,12 +55,24 @@ public:
                 return;
             }
         }
-        cout << "Error in LinkedList: Tried to remove a Block which does not exist." << endl;
-        throw runtime_error("Tried to remove a Block which does not exist");
 	}
     
     bool empty() {
         return head == NULL;
+    }
+    
+    bool includes(BlockHeader* b) { // check if this element exists in the list
+        assert(head);
+        if(head == b) {
+            return true;
+        }
+        BlockHeader* curr = head;
+        while(curr->next) {
+            if(curr->next == b) {
+                return true;
+            }
+        }
+        return false;
     }
     
     BlockHeader* back() {
@@ -101,6 +111,7 @@ private:
 	BlockHeader* merge (BlockHeader* block1, BlockHeader* block2);
 	// this function merges the two blocks returns the beginning address of the merged block
 	// note that either block1 can be to the left of block2, or the other way around
+    // assumes blocks are of equal size
 
 	BlockHeader* split (BlockHeader* block);
 	// splits the given block by putting a new header halfway through the block
