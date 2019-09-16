@@ -8,13 +8,15 @@
 using namespace std;
 
 BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length){
+    assert(_total_memory_length >= _basic_block_size);
     // assign basic block size which is the next biggest pwr of 2
-    setBasicBlockSize(_basic_block_size); // DONE
+    setBasicBlockSize(_basic_block_size);
     // assign memory length
-    setTotalMemoryLength(_total_memory_length); // DONE
+    setTotalMemoryLength(_total_memory_length);
     // allocate a chunk of memory
-    memory_block_head = new char[total_memory_length]; // DONE
-    largest_block_index = getFreeListIndex(total_memory_length); // ?
+    memory_block_head = new char[total_memory_length];
+    // getFreeListIndex() returns ceil which is not what we want here
+    largest_block_index = getFreeListIndex(total_memory_length) - 1;
     // populate the FreeList with linked lists
     for(int i = 0; i <= largest_block_index; i++) {
         free_list[i] = LinkedList();
@@ -25,6 +27,7 @@ BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length)
     b->size = total_memory_length;
     b->next = NULL;
     free_list[largest_block_index].insert(b);
+    cout << "Inserted largest block of size " << _total_memory_length << " at " << largest_block_index << "." << endl;
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -66,15 +69,33 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
     return block2;
 }
 
-BlockHeader* BuddyAllocator::split (BlockHeader* block) {
+BlockHeader* BuddyAllocator::splitOnce (BlockHeader* block) {
+    assert(block->size > basic_block_size);
+    int free_list_index = getFreeListIndex(block->size);
     pointer_arithmetic_t block_ptr = (pointer_arithmetic_t) block; // will advance this to the buddy position
     block_ptr += (pointer_arithmetic_t) (block->size - BLOCKHEADER_SIZE); // now at front of new buddy
     BlockHeader* new_buddy = (BlockHeader*) block_ptr;
+    // update old block and move to correct index in free list
     block->size /= 2;
+    if(!free_list[free_list_index].empty())
+        free_list[free_list_index].remove(block); // if the block doesn't exist in the list that's ok
+    free_list[free_list_index - 1].insert(block);
     new_buddy->size = block->size;
     new_buddy->next = NULL;
     // do not add the new split block to the free list because it is about to be used
     return new_buddy;
+}
+
+BlockHeader* BuddyAllocator::split (BlockHeader* block, int size) {
+    assert(block);
+    int actual_block_size = block->size - BLOCKHEADER_SIZE;
+    int next_smallest_block_size = block->size/2 - BLOCKHEADER_SIZE;
+    if(size > next_smallest_block_size && size <= actual_block_size) {
+        // if size is between next smallest and current, return the block
+        return block;
+    }
+    cout << "Splitting block of size " << block->size << "." << endl;
+    return split(splitOnce(block), size); // keep splitting until size is optimized
 }
 
 char* BuddyAllocator::getRawFromHeader(BlockHeader* block) {
@@ -91,11 +112,6 @@ BlockHeader* BuddyAllocator::getHeaderFromRaw(char* raw_block) {
 }
 // backtrack from raw memory block pointer to its BlockHeader
 
-int BuddyAllocator::getFreeListIndex(int requested_size) {
-    return (int) log2(requested_size/basic_block_size);
-}
-// get an index corresponding to a slot in the free_list which could offer enough memory for the user
-
 void BuddyAllocator::setBasicBlockSize(int input_size) { // assumes a power of 2 is entered
     basic_block_size = (uint) input_size;
 }
@@ -104,22 +120,29 @@ void BuddyAllocator::setTotalMemoryLength(int input_size) { // assumes a power o
     total_memory_length = (uint) input_size;
 }
 
+int BuddyAllocator::getFreeListIndex(int requested_size) {
+    return (int) ceil(log2(requested_size/(basic_block_size - BLOCKHEADER_SIZE)));
+}
+
 char* BuddyAllocator::alloc(int _length) {
     // go to smallest slot possible in free list and search until a free block is found
     int smallest_index = getFreeListIndex(_length);
     if(!free_list[smallest_index].empty()) {
         BlockHeader* block = free_list[smallest_index].back();
-        free_list[smallest_index].remove(block);
+        if(!free_list[smallest_index].empty())
+            free_list[smallest_index].remove(block);
         // return raw block
+        cout << "Removed block of size " << block->size << " from free list." << endl;
         return getRawFromHeader(block);
     }
     for(int i = smallest_index + 1; i <= largest_block_index; i++) {
         if(!free_list[i].empty()) {
-            BlockHeader* block = free_list[smallest_index].back();
-            free_list[smallest_index].remove(block);
+            BlockHeader* block = free_list[i].back();
+            if(!free_list[i].empty())
+                free_list[i].remove(block);
             // recursively split block
             // return raw block
-            return getRawFromHeader(split(block));
+            return getRawFromHeader(split(block, _length));
         }
     }
     cout << "attempting to alloc more memory than is available in total." << endl;

@@ -91,7 +91,6 @@ public:
 
 class BuddyAllocator {
 private:
-	/* declare member variables as necessary */
     uint basic_block_size;
     uint total_memory_length;
     int largest_block_index;
@@ -99,9 +98,6 @@ private:
     LinkedList free_list[MAX_MEM_INDEX];
     
 private:
-	/* private function you are required to implement
-	 this will allow you and us to do unit test */
-	
 	BlockHeader* getbuddy (BlockHeader * addr); 
 	// given a block address, this function returns the address of its buddy 
 	
@@ -113,9 +109,12 @@ private:
 	// note that either block1 can be to the left of block2, or the other way around
     // assumes blocks are of equal size
 
-	BlockHeader* split (BlockHeader* block);
+	BlockHeader* splitOnce (BlockHeader* block);
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
+    
+    BlockHeader* split (BlockHeader* block, int block_size);
+    // recursively splits block until maximized for the given size
     
     char* getRawFromHeader(BlockHeader* block);
     // advance the BlockHeader pointer to its raw memory block
@@ -123,11 +122,10 @@ private:
     BlockHeader* getHeaderFromRaw(char* raw_block);
     // backtrack from raw memory block pointer to its BlockHeader
     
-    int getFreeListIndex(int requested_size);
-    // get an index corresponding to a slot in the free_list which could offer enough memory for the user
-    
     void setBasicBlockSize(int input_size);
     void setTotalMemoryLength(int input_size);
+    int getFreeListIndex(int requested_size);
+    // get an index corresponding to a slot in the free_list which could offer enough memory for the user
     
 
 public:
