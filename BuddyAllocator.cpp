@@ -27,7 +27,11 @@ BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length)
     b->size = total_memory_length;
     b->next = NULL;
     free_list[largest_block_index].insert(b);
-    cout << "Inserted largest block of size " << _total_memory_length << " at " << largest_block_index << "." << endl;
+    cout << "Head of mem = " << memory_block_head << endl;
+    cout << "Created largest block at address " << b << endl;
+    cout << "Size of block = " << b->size << endl;
+    cout << "Added block to list at i=" << largest_block_index << " in free list." << endl;
+    cout << "Is the free list empty at this index now? : " << free_list[largest_block_index].empty() << endl;
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -137,6 +141,9 @@ char* BuddyAllocator::alloc(int _length) {
     }
     for(int i = smallest_index + 1; i <= largest_block_index; i++) {
         if(!free_list[i].empty()) {
+            cout << "Getting block from index i=" << i << " of the free list." << endl;
+            cout << "Address of this block is " << free_list[i].back() << endl;
+            cout << "Size of this block is " << free_list[i].back()->size << endl;
             BlockHeader* block = free_list[i].back();
             if(!free_list[i].empty())
                 free_list[i].remove(block);
@@ -144,6 +151,7 @@ char* BuddyAllocator::alloc(int _length) {
             // return raw block
             return getRawFromHeader(split(block, _length));
         }
+        cout << i << endl;
     }
     cout << "attempting to alloc more memory than is available in total." << endl;
     return NULL;

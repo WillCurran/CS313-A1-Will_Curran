@@ -13,7 +13,7 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #define MAX_MEM_INDEX 64
-#define BLOCKHEADER_SIZE 16 // sizeof(BlockHeader obj) = 16
+#define BLOCKHEADER_SIZE 16 // sizeof(some_BlockHeader) = 16
 
 #include <iostream>
 #include <assert.h>
@@ -58,6 +58,7 @@ public:
 	}
     
     bool empty() {
+//        cout << head << endl;
         return head == NULL;
     }
     
