@@ -17,14 +17,14 @@
 #include <iostream>
 #include <assert.h>
 using namespace std;
-typedef unsigned int uint;
+typedef uint uint;
 
 /* declare types as you need */
 
 class BlockHeader {
 public:
 //    bool free; // is the memory allocated currently? IS THIS USED?
-    unsigned int size; // how big is the entire block?
+    uint size; // how big is the entire block?
     BlockHeader* next;
 };
 
@@ -82,8 +82,8 @@ public:
 class BuddyAllocator {
 private:
 	/* declare member variables as necessary */
-    unsigned int basic_block_size;
-    unsigned int total_memory_length;
+    uint basic_block_size;
+    uint total_memory_length;
     int largest_block_index;
     void* memory_block_head;
     LinkedList free_list[MAX_MEM_INDEX];
