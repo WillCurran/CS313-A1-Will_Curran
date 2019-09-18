@@ -78,12 +78,15 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
 
 BlockHeader* BuddyAllocator::splitOnce (BlockHeader* block) {
     assert(block->size > basic_block_size);
+    block->size /= 2; // update old block
     int free_list_index = getFreeListIndex(block->size);
+//    cout << "index in free list of block to split: " << free_list_index << endl;
     pointer_arithmetic_t block_ptr = (pointer_arithmetic_t) block; // will advance this to the buddy position
+//    cout << "Block address: " << block << endl;
     block_ptr += (pointer_arithmetic_t) (block->size); // now at front of new buddy
     BlockHeader* new_buddy = (BlockHeader*) block_ptr;
-    // update old block and move to correct index in free list
-    block->size /= 2;
+//    cout << "Creating buddy at: " << new_buddy << endl;
+    // move old (now split) block to correct index in free list
     if(!free_list[free_list_index].empty())
         free_list[free_list_index].remove(block); // if the block doesn't exist in the list that's ok
     free_list[free_list_index - 1].insert(block);
@@ -178,7 +181,7 @@ void BuddyAllocator::printFreeListState() {
     for(int i = 0; i <= largest_block_index; i++) {
         cout << ":i = " << i << ": ";
         if(!free_list[i].empty()) {
-            cout << free_list[i].back();
+            cout << (void*)((pointer_arithmetic_t)free_list[i].back() - (pointer_arithmetic_t)memory_block_head);
         }
         cout << endl;
     }
@@ -189,6 +192,8 @@ void BuddyAllocator::allocTest() {
     cout << "head: " << memory_block_head << endl;
     printFreeListState();
     char* a = alloc(100);
+    cout << "allocated at " << (void*)a << endl;
+    cout << "alloc - head: " << (void*)((pointer_arithmetic_t)a - (pointer_arithmetic_t)memory_block_head) << endl;
     printFreeListState();
 //    char* b = alloc(100);
 //    printFreeListState();
@@ -202,5 +207,10 @@ void BuddyAllocator::allocTest() {
 
 void BuddyAllocator::debug () {
     cout << "Test Battery:" << endl;
-    allocTest();
+    BlockHeader* b = free_list[largest_block_index].back();
+    cout << "head at: " << memory_block_head << endl;
+    cout << "block at: " << b << endl;
+    BlockHeader* c = splitOnce(b);
+    cout << "split block which was not added to free list: " << c << endl;
+    printFreeListState();
 }
