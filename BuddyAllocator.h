@@ -132,6 +132,12 @@ private:
     int getFreeListIndex(int requested_size);
     // get an index corresponding to a slot in the free_list which could offer enough memory for the user
     
+    // DEBUG FUNCTIONS
+    
+    void splitOnceTest();
+    void splitTest();
+    void allocTest();
+    
 
 public:
 	BuddyAllocator (int _basic_block_size, int _total_memory_length); 
@@ -154,10 +160,6 @@ public:
 	int free(char* _a); 
 	/* Frees the section of physical memory previously allocated 
 	   using ’my_malloc’. Returns 0 if everything ok. */
-    
-    // DEBUG FUNCTIONS
-    
-    void allocTest();
    
 	void debug ();
 	/* Mainly used for debugging purposes and running short test cases */
