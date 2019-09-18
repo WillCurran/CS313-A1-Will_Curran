@@ -2,7 +2,6 @@
     File: my_allocator.cpp
 */
 #include "BuddyAllocator.h"
-#include "DebugHelper.h"
 #include <iostream>
 #include <math.h>
 using namespace std;
@@ -32,9 +31,10 @@ BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length)
 //    cout << "Added block to list at i=" << largest_block_index << " in free list." << endl;
 //    cout << "Is the free list empty at this index now? : " << free_list[largest_block_index].empty() << endl;
     
-    for(int i = 0; i <= largest_block_index; i++) {
-        cout << "Is the free list empty at i = " << i << "? : " << free_list[i].empty() << endl;
-    }
+//    for(int i = 0; i <= largest_block_index; i++) {
+//        cout << "Is the free list empty at i = " << i << "? : " << free_list[i].empty() << endl;
+//    }
+    cout << "Head in constructor: " << memory_block_head << endl;
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -80,7 +80,7 @@ BlockHeader* BuddyAllocator::splitOnce (BlockHeader* block) {
     assert(block->size > basic_block_size);
     int free_list_index = getFreeListIndex(block->size);
     pointer_arithmetic_t block_ptr = (pointer_arithmetic_t) block; // will advance this to the buddy position
-    block_ptr += (pointer_arithmetic_t) (block->size - BLOCKHEADER_SIZE); // now at front of new buddy
+    block_ptr += (pointer_arithmetic_t) (block->size); // now at front of new buddy
     BlockHeader* new_buddy = (BlockHeader*) block_ptr;
     // update old block and move to correct index in free list
     block->size /= 2;
@@ -134,8 +134,7 @@ int BuddyAllocator::getFreeListIndex(int requested_size) {
 char* BuddyAllocator::alloc(int _length) {
     // go to smallest slot possible in free list and search until a free block is found
     int smallest_index = getFreeListIndex(_length);
-    cout << "at i=" << smallest_index << endl;
-    if(!free_list[smallest_index].empty()) {
+    if(!free_list[smallest_index].empty()) { // if the first slot available has some free
         BlockHeader* block = free_list[smallest_index].back();
         if(!free_list[smallest_index].empty())
             free_list[smallest_index].remove(block);
@@ -144,11 +143,7 @@ char* BuddyAllocator::alloc(int _length) {
         return getRawFromHeader(block);
     }
     for(int i = smallest_index + 1; i <= largest_block_index; i++) {
-        cout << "at i=" << i << endl;
         if(!free_list[i].empty()) {
-            cout << "Getting block from index i=" << i << " of the free list." << endl;
-            cout << "Address of this block is " << free_list[i].back() << endl;
-            cout << "Size of this block is " << free_list[i].back()->size << endl;
             BlockHeader* block = free_list[i].back();
             if(!free_list[i].empty())
                 free_list[i].remove(block);
@@ -156,7 +151,6 @@ char* BuddyAllocator::alloc(int _length) {
             // return raw block
             return getRawFromHeader(split(block, _length));
         }
-        cout << i << endl;
     }
     cout << "attempting to alloc more memory than is available in total." << endl;
     return NULL;
@@ -178,7 +172,35 @@ int BuddyAllocator::free(char* _a) {
     return 0;
 }
 
+// DEBUG FUNCTIONS
+
+void BuddyAllocator::printFreeListState() {
+    for(int i = 0; i <= largest_block_index; i++) {
+        cout << ":i = " << i << ": ";
+        if(!free_list[i].empty()) {
+            cout << free_list[i].back();
+        }
+        cout << endl;
+    }
+}
+
+void BuddyAllocator::allocTest() {
+    std::cout << "basic alloc test: " << endl;
+    cout << "head: " << memory_block_head << endl;
+    printFreeListState();
+    char* a = alloc(100);
+    printFreeListState();
+//    char* b = alloc(100);
+//    printFreeListState();
+//    cout << (void*)((pointer_arithmetic_t) memory_block_head + 512) << endl;
+    if(true) {
+        cout << "PASSED" << endl;
+    } else {
+        cout << "FAILED" << endl;
+    }
+}
+
 void BuddyAllocator::debug () {
     cout << "Test Battery:" << endl;
-    runAllTests();
+    allocTest();
 }

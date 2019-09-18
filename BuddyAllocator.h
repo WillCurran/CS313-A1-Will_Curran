@@ -153,7 +153,11 @@ public:
 
 	int free(char* _a); 
 	/* Frees the section of physical memory previously allocated 
-	   using ’my_malloc’. Returns 0 if everything ok. */ 
+	   using ’my_malloc’. Returns 0 if everything ok. */
+    
+    // DEBUG FUNCTIONS
+    
+    void allocTest();
    
 	void debug ();
 	/* Mainly used for debugging purposes and running short test cases */
@@ -167,6 +171,8 @@ public:
 	....
 	....
 	 which means that at point, the allocator has 5 128 byte blocks, 3 512 byte blocks and so on.*/
+    
+    void printFreeListState();
 };
 
 #endif 
