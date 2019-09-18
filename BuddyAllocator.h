@@ -31,6 +31,10 @@ class LinkedList {
 private:
     BlockHeader* head;        // you need a head of the list
 public:
+    LinkedList() {
+        head = NULL;
+    }
+    
 	void insert (BlockHeader* b) {	// adds a block to the list
         if(head) {
             BlockHeader* curr = head;

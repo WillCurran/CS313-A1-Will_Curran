@@ -20,18 +20,21 @@ BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length)
     // populate the FreeList with linked lists
     for(int i = 0; i <= largest_block_index; i++) {
         free_list[i] = LinkedList();
-        free_list[i].insert(NULL);
     }
     // populate the last linked list with a block
     BlockHeader* b = (BlockHeader*) memory_block_head;
     b->size = total_memory_length;
     b->next = NULL;
     free_list[largest_block_index].insert(b);
-    cout << "Head of mem = " << memory_block_head << endl;
-    cout << "Created largest block at address " << b << endl;
-    cout << "Size of block = " << b->size << endl;
-    cout << "Added block to list at i=" << largest_block_index << " in free list." << endl;
-    cout << "Is the free list empty at this index now? : " << free_list[largest_block_index].empty() << endl;
+//    cout << "Head of mem = " << memory_block_head << endl;
+//    cout << "Created largest block at address " << b << endl;
+//    cout << "Size of block = " << b->size << endl;
+//    cout << "Added block to list at i=" << largest_block_index << " in free list." << endl;
+//    cout << "Is the free list empty at this index now? : " << free_list[largest_block_index].empty() << endl;
+    
+    for(int i = 0; i <= largest_block_index; i++) {
+        cout << "Is the free list empty at i = " << i << "? : " << free_list[i].empty() << endl;
+    }
 }
 
 BuddyAllocator::~BuddyAllocator (){
@@ -125,12 +128,13 @@ void BuddyAllocator::setTotalMemoryLength(int input_size) { // assumes a power o
 }
 
 int BuddyAllocator::getFreeListIndex(int requested_size) {
-    return (int) ceil(log2(requested_size/(basic_block_size - BLOCKHEADER_SIZE)));
+    return (int) ceil(log2(requested_size/((double)(basic_block_size - BLOCKHEADER_SIZE))));
 }
 
 char* BuddyAllocator::alloc(int _length) {
     // go to smallest slot possible in free list and search until a free block is found
     int smallest_index = getFreeListIndex(_length);
+    cout << "at i=" << smallest_index << endl;
     if(!free_list[smallest_index].empty()) {
         BlockHeader* block = free_list[smallest_index].back();
         if(!free_list[smallest_index].empty())
@@ -140,6 +144,7 @@ char* BuddyAllocator::alloc(int _length) {
         return getRawFromHeader(block);
     }
     for(int i = smallest_index + 1; i <= largest_block_index; i++) {
+        cout << "at i=" << i << endl;
         if(!free_list[i].empty()) {
             cout << "Getting block from index i=" << i << " of the free list." << endl;
             cout << "Address of this block is " << free_list[i].back() << endl;

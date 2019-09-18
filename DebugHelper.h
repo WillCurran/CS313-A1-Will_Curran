@@ -4,7 +4,7 @@
 #include <iostream>
 
 void allocTest(BuddyAllocator* b) {
-    std::cout << "basic alloc test: ";
+    std::cout << "basic alloc test: " << endl;
     char* b1 = b->alloc(100);
     
     if(true) {
