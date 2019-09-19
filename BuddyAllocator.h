@@ -41,17 +41,14 @@ public:
             while(curr->next)
                 curr = curr->next;
             curr->next = b;
-            cout << "inserted " << b << " after " << curr << " in the free list." << endl;
         } else {
             head = b;
-            cout << "inserted " << b << " as head in the free list." << endl;
         }
 	}
 
 	void remove (BlockHeader* b) {  // removes a block from the list if it exists, but does not delete it
         assert(head);
         if(head == b) {
-            cout << "removing head." << endl;
             head = head->next;
             b->next = NULL;
             return;

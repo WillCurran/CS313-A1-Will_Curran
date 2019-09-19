@@ -100,8 +100,10 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
 
 BlockHeader* BuddyAllocator::splitOnce (BlockHeader* block) {
     assert(block->size > basic_block_size);
+    
+    int free_list_index = getFreeListIndex(block->size - BLOCKHEADER_SIZE); // BREAKS EVERYTHING IF SUBTRACT OFF HEADER SIZE HERE
+//    cout << free_list_index << endl;
     block->size /= 2; // update old block
-    int free_list_index = getFreeListIndex(block->size); // BREAKS EVERYTHING IF SUBTRACT OFF HEADER SIZE HERE
 //    cout << "index in free list of block to split: " << free_list_index << endl;
     pointer_arithmetic_t block_ptr = (pointer_arithmetic_t) block; // will advance this to the buddy position
 //    cout << "Block address: " << block << endl;
@@ -248,6 +250,7 @@ void BuddyAllocator::splitOnceTest() {
     BlockHeader* b = free_list[largest_block_index].back();
     BlockHeader* c = splitOnce(b);
     cout << "split block which was not added to free list: " << (void*)((pointer_arithmetic_t)c - (pointer_arithmetic_t)memory_block_head) << endl;
+    printFreeListState();
     cout << "split again." << endl;
     BlockHeader* d = splitOnce(c);
     cout << "split block which was not added to free list: " << (void*)((pointer_arithmetic_t)d - (pointer_arithmetic_t)memory_block_head) << endl;
