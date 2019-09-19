@@ -35,29 +35,35 @@ public:
         head = NULL;
     }
     
-	void insert (BlockHeader* b) {	// adds a block to the list
+	void insert (BlockHeader* b) {	// adds a block to the end of the list
         if(head) {
             BlockHeader* curr = head;
             while(curr->next)
                 curr = curr->next;
             curr->next = b;
+            cout << "inserted " << b << " after " << curr << " in the free list." << endl;
         } else {
             head = b;
+            cout << "inserted " << b << " as head in the free list." << endl;
         }
 	}
 
 	void remove (BlockHeader* b) {  // removes a block from the list if it exists, but does not delete it
         assert(head);
         if(head == b) {
-            head = NULL;
+            cout << "removing head." << endl;
+            head = head->next;
+            b->next = NULL;
             return;
         }
         BlockHeader* curr = head;
         while(curr->next) {
             if(curr->next == b) {
                 curr->next = curr->next->next;
+                b->next = NULL;
                 return;
             }
+            curr = curr->next;
         }
 	}
     
@@ -67,7 +73,9 @@ public:
     }
     
     bool includes(BlockHeader* b) { // check if this element exists in the list
-        assert(head);
+        if(!head) {
+            return false;
+        }
         if(head == b) {
             return true;
         }
@@ -76,8 +84,14 @@ public:
             if(curr->next == b) {
                 return true;
             }
+            curr = curr->next;
         }
         return false;
+    }
+    
+    BlockHeader* front() {
+        // get the first element in the list
+        return head;
     }
     
     BlockHeader* back() {

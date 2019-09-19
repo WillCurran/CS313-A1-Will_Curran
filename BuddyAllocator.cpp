@@ -41,7 +41,7 @@ BuddyAllocator::~BuddyAllocator (){
     delete[] memory_block_head;
 }
 
-BlockHeader* BuddyAllocator::getbuddy (BlockHeader * addr) {
+BlockHeader* BuddyAllocator::getbuddy (BlockHeader* addr) {
     pointer_arithmetic_t relative_addr = (pointer_arithmetic_t) addr;
     pointer_arithmetic_t memory_head = (pointer_arithmetic_t) memory_block_head;
     pointer_arithmetic_t size_of_block = (pointer_arithmetic_t) addr->size;
@@ -61,17 +61,29 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
     int free_list_index = getFreeListIndex(size_of_these_blocks);
     // if either blocks were in free list, remove them
     if(!free_list[free_list_index].empty()) {
+        cout << "Removing the blocks from the free list if either was contained in it." << endl;
+        cout << "b1 = " << block1 << endl;
+        cout << "b1->next = " << block1->next << endl;
         free_list[free_list_index].remove(block1);
+        cout << "b2 = " << block2 << endl;
+        cout << "b2->next = " << block2->next << endl;
         free_list[free_list_index].remove(block2);
     }
     pointer_arithmetic_t b1 = (pointer_arithmetic_t) block1;
     pointer_arithmetic_t b2 = (pointer_arithmetic_t) block2;
-    if(b1 > b2) { // whichever block is first, return it with double the size
+    cout << "which is smaller, b1 = " << block1 << " or b2 = " << block2 << "?" << endl;
+    if(b1 < b2) { // whichever block is first, return it with double the size
+        cout << "b1." << endl;
         block1->size *= 2;
+        cout << "updated size of b1 = " << block1->size << endl;
+        cout << "inserting the big block into the next free list slot at i = " << free_list_index + 1 << endl;
         free_list[free_list_index + 1].insert(block1); // add big block in the next slot of free list
         return block1;
     }
+    cout << "b2." << endl;
     block2->size *= 2;
+    cout << "updated size of b2 = " << block2->size << endl;
+    cout << "inserting the big block into the next free lisBt slot at i = " << free_list_index + 1 << endl;
     free_list[free_list_index + 1].insert(block2); // add big block in the next slot of free list
     return block2;
 }
@@ -121,12 +133,17 @@ char* BuddyAllocator::getRawFromHeader(BlockHeader* block) {
 // advance the BlockHeader pointer to its raw memory block
 
 BlockHeader* BuddyAllocator::getHeaderFromRaw(char* raw_block) {
-    assert(raw_block != NULL);
+    if(raw_block == NULL) {
+        return NULL;
+    }
     pointer_arithmetic_t header = (pointer_arithmetic_t) raw_block;
     header -= BLOCKHEADER_SIZE;
     // check to see if this memory is within bounds of what was allocated.
-    assert(memory_block_head <= (void*)header);
-    assert((void*)header <= (void*)((pointer_arithmetic_t)memory_block_head + total_memory_length - ((BlockHeader*) header)->size));
+    if(memory_block_head > (void*)header) { // use this structure as a bit of protection against garbage data
+        return NULL;
+    } else if((void*)header > (void*)((pointer_arithmetic_t)memory_block_head + total_memory_length - ((BlockHeader*) header)->size)) {
+        return NULL;
+    }
     return (BlockHeader*) header;
 }
 // backtrack from raw memory block pointer to its BlockHeader
@@ -181,11 +198,18 @@ char* BuddyAllocator::alloc(int _length) {
 int BuddyAllocator::free(char* _a) {
     // get the blockheader, add it to the free list or merge with its buddy in the free list
     BlockHeader* block = getHeaderFromRaw(_a);
+    if(!block) {
+        return -1;
+    }
+    cout << "free the block at: " << (void*)((pointer_arithmetic_t)block - (pointer_arithmetic_t)memory_block_head) << endl;
     BlockHeader* buddy = getbuddy(block);
+    cout << "found buddy at: " << (void*)((pointer_arithmetic_t)buddy - (pointer_arithmetic_t)memory_block_head) << endl;
     int free_list_index = getFreeListIndex(block->size);
     if(free_list[free_list_index].includes(buddy)) {
+        cout << "merging block with it's buddy!" << endl;
         merge(block, buddy);
     } else {
+        cout << "inserting block into free list." << endl;
         free_list[free_list_index].insert(block);
     }
     return 0;
@@ -197,7 +221,13 @@ void BuddyAllocator::printFreeListState() {
     for(int i = 0; i <= largest_block_index; i++) {
         cout << ":i = " << i << ": ";
         if(!free_list[i].empty()) {
-            cout << (void*)((pointer_arithmetic_t)free_list[i].back() - (pointer_arithmetic_t)memory_block_head);
+            BlockHeader* curr = free_list[i].front();
+            cout << (void*)((pointer_arithmetic_t)curr - (pointer_arithmetic_t)memory_block_head);
+            curr = curr->next;
+            while(curr) {
+                cout << " - " << (void*)((pointer_arithmetic_t)curr - (pointer_arithmetic_t)memory_block_head);
+                curr = curr->next;
+            }
         }
         cout << endl;
     }
@@ -256,8 +286,29 @@ void BuddyAllocator::allocTest() {
     cout << "PASSED" << endl;
 }
 
+void BuddyAllocator::freeTest() { // assumes allocTest() passes
+    std::cout << "simple free test -- ";
+    char* a = alloc(100);
+    void* a_test = (void*)((pointer_arithmetic_t)a - (pointer_arithmetic_t)memory_block_head);
+    char* b = alloc(4);
+    void* b_test = (void*)((pointer_arithmetic_t)b - (pointer_arithmetic_t)memory_block_head);
+    char* c = alloc(466);
+    void* c_test = (void*)((pointer_arithmetic_t)c - (pointer_arithmetic_t)memory_block_head);
+    char* d = alloc(100);
+    void* d_test = (void*)((pointer_arithmetic_t)d - (pointer_arithmetic_t)memory_block_head);
+    char* e = alloc(112);
+    void* e_test = (void*)((pointer_arithmetic_t)e - (pointer_arithmetic_t)memory_block_head);
+    int f_check1 = free(a);
+    printFreeListState();
+    int f_check2 = free(e);
+    printFreeListState();
+    int f_check3 = free(b);
+    printFreeListState();
+}
+
 void BuddyAllocator::debug () { // assumes a total memory size of 1024 and basic block of 128
     cout << "Test Battery:" << endl;
 //    splitTest();
-    allocTest();
+//    allocTest();
+    freeTest();
 }
