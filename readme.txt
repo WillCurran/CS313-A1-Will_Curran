@@ -4,7 +4,7 @@ Here comes the source code for PA1. The following files are included:
 
 -- BuddyAllocator.h and .cpp : Contain the Allocator class, where the .cpp has placeholder implementations of the functions defined in the header. This code is operational as-is, but you need to replace the implementation (inside the .cpp) with yours!
 
--- Main.cpp: This file calls the Ackerman::test() function to exercise your allocator. You will need to add initialization and clean-up of the allocator on exit.
+-- Main.cpp: This file calls the Ackerman::test() function to exercise your allocator. You will need to add initialization and clean-up of the allocator on exit. Used code found on <https://pubs.opengroup.org/onlinepubs/009695399/functions/getopt.html> for parsing command line arguments.
 
 -- makefile : This file tells 'make' how to compile everything together.
 
