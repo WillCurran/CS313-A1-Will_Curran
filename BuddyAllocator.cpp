@@ -15,7 +15,7 @@ BuddyAllocator::BuddyAllocator (int _basic_block_size, int _total_memory_length)
     // allocate a chunk of memory
     memory_block_head = new char[total_memory_length];
     // getFreeListIndex() returns ceil which is not what we want here
-    largest_block_index = getFreeListIndex(total_memory_length) - 1;
+    largest_block_index = getFreeListIndex(total_memory_length - BLOCKHEADER_SIZE);
     // populate the FreeList with linked lists
     for(int i = 0; i <= largest_block_index; i++) {
         free_list[i] = LinkedList();
@@ -57,7 +57,7 @@ bool BuddyAllocator::arebuddies (BlockHeader* block1, BlockHeader* block2) {
 BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
     assert(block1 && block2);
     assert(block1->size == block2->size);
-    int size_of_these_blocks = block1->size;
+    int size_of_these_blocks = block1->size - BLOCKHEADER_SIZE;
     int free_list_index = getFreeListIndex(size_of_these_blocks);
     // if either blocks were in free list, remove them
     if(!free_list[free_list_index].empty()) {
@@ -76,6 +76,11 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
         cout << "b1." << endl;
         block1->size *= 2;
         cout << "updated size of b1 = " << block1->size << endl;
+        BlockHeader* buddy = getbuddy(block1);
+        if(free_list[free_list_index + 1].includes(buddy)) {
+            cout << "found buddy again!" << endl;
+            return merge(block1, buddy);
+        }
         cout << "inserting the big block into the next free list slot at i = " << free_list_index + 1 << endl;
         free_list[free_list_index + 1].insert(block1); // add big block in the next slot of free list
         return block1;
@@ -83,6 +88,11 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
     cout << "b2." << endl;
     block2->size *= 2;
     cout << "updated size of b2 = " << block2->size << endl;
+    BlockHeader* buddy = getbuddy(block2);
+    if(free_list[free_list_index + 1].includes(buddy)) {
+        cout << "found buddy again!" << endl;
+        return merge(block2, buddy);
+    }
     cout << "inserting the big block into the next free lisBt slot at i = " << free_list_index + 1 << endl;
     free_list[free_list_index + 1].insert(block2); // add big block in the next slot of free list
     return block2;
@@ -91,7 +101,7 @@ BlockHeader* BuddyAllocator::merge (BlockHeader* block1, BlockHeader* block2) {
 BlockHeader* BuddyAllocator::splitOnce (BlockHeader* block) {
     assert(block->size > basic_block_size);
     block->size /= 2; // update old block
-    int free_list_index = getFreeListIndex(block->size);
+    int free_list_index = getFreeListIndex(block->size); // BREAKS EVERYTHING IF SUBTRACT OFF HEADER SIZE HERE
 //    cout << "index in free list of block to split: " << free_list_index << endl;
     pointer_arithmetic_t block_ptr = (pointer_arithmetic_t) block; // will advance this to the buddy position
 //    cout << "Block address: " << block << endl;
@@ -204,12 +214,13 @@ int BuddyAllocator::free(char* _a) {
     cout << "free the block at: " << (void*)((pointer_arithmetic_t)block - (pointer_arithmetic_t)memory_block_head) << endl;
     BlockHeader* buddy = getbuddy(block);
     cout << "found buddy at: " << (void*)((pointer_arithmetic_t)buddy - (pointer_arithmetic_t)memory_block_head) << endl;
-    int free_list_index = getFreeListIndex(block->size);
+    cout << "block size = " << block->size << endl;
+    int free_list_index = getFreeListIndex(block->size - BLOCKHEADER_SIZE);
     if(free_list[free_list_index].includes(buddy)) {
         cout << "merging block with it's buddy!" << endl;
         merge(block, buddy);
     } else {
-        cout << "inserting block into free list." << endl;
+        cout << "inserting block into free list at i = " << free_list_index << endl;
         free_list[free_list_index].insert(block);
     }
     return 0;
@@ -303,6 +314,10 @@ void BuddyAllocator::freeTest() { // assumes allocTest() passes
     int f_check2 = free(e);
     printFreeListState();
     int f_check3 = free(b);
+    printFreeListState();
+    int f_check4 = free(d);
+    printFreeListState();
+    int f_check5 = free(c);
     printFreeListState();
 }
 

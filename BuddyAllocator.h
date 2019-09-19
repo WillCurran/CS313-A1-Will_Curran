@@ -135,15 +135,15 @@ private:
     BlockHeader* split (BlockHeader* block, int block_size);
     // recursively splits block until maximized for the given size
     
-    char* getRawFromHeader(BlockHeader* block);
+    char* getRawFromHeader (BlockHeader* block);
     // advance the BlockHeader pointer to its raw memory block
     
-    BlockHeader* getHeaderFromRaw(char* raw_block);
+    BlockHeader* getHeaderFromRaw (char* raw_block);
     // backtrack from raw memory block pointer to its BlockHeader
     
-    void setBasicBlockSize(int input_size);
-    void setTotalMemoryLength(int input_size);
-    int getFreeListIndex(int requested_size);
+    void setBasicBlockSize (int input_size);
+    void setTotalMemoryLength (int input_size);
+    int getFreeListIndex (int requested_size);
     // get an index corresponding to a slot in the free_list which could offer enough memory for the user
     
     // DEBUG FUNCTIONS
@@ -167,15 +167,15 @@ public:
 	   There should not be any memory leakage (i.e., memory staying allocated).
 	*/ 
 
-	char* alloc(int _length); 
+	char* alloc (int _length);
 	/* Allocate _length number of bytes of free memory and returns the 
 		address of the allocated portion. Returns 0 when out of memory. */ 
 
-	int free(char* _a); 
+	int free (char* _a);
 	/* Frees the section of physical memory previously allocated 
 	   using ’my_malloc’. Returns 0 if everything ok. */
    
-	void debug ();
+	void debug();
 	/* Mainly used for debugging purposes and running short test cases */
 	/* This function should print how many free blocks of each size belong to the allocator
 	at that point. The output format should be the following (assuming basic block size = 128 bytes):
