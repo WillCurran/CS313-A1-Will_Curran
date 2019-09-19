@@ -137,7 +137,7 @@ private:
     void splitOnceTest();
     void splitTest();
     void allocTest();
-    
+    void freeTest();
 
 public:
 	BuddyAllocator (int _basic_block_size, int _total_memory_length); 

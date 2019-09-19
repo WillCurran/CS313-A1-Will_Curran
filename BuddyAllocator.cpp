@@ -121,8 +121,12 @@ char* BuddyAllocator::getRawFromHeader(BlockHeader* block) {
 // advance the BlockHeader pointer to its raw memory block
 
 BlockHeader* BuddyAllocator::getHeaderFromRaw(char* raw_block) {
+    assert(raw_block != NULL);
     pointer_arithmetic_t header = (pointer_arithmetic_t) raw_block;
     header -= BLOCKHEADER_SIZE;
+    // check to see if this memory is within bounds of what was allocated.
+    assert(memory_block_head <= (void*)header);
+    assert((void*)header <= (void*)((pointer_arithmetic_t)memory_block_head + total_memory_length - ((BlockHeader*) header)->size));
     return (BlockHeader*) header;
 }
 // backtrack from raw memory block pointer to its BlockHeader
@@ -136,25 +140,30 @@ void BuddyAllocator::setTotalMemoryLength(int input_size) { // assumes a power o
 }
 
 int BuddyAllocator::getFreeListIndex(int requested_size) {
-    cout << "rs: " << requested_size << endl;
-    cout << "bbs: " << basic_block_size << endl;
-    cout << "BHS: " << BLOCKHEADER_SIZE << endl;
-    return (int) ceil(log2(requested_size/((double)(basic_block_size - BLOCKHEADER_SIZE))));
+    double argument = (requested_size + BLOCKHEADER_SIZE)/(double)(basic_block_size);
+//    cout << "rs: " << requested_size + BLOCKHEADER_SIZE << endl;
+//    cout << "bs: " << basic_block_size << endl;
+//    cout << "argument: " << argument << endl;
+//    cout << "log2(arg): " << log2(argument) << endl;
+    if(argument < 1) { // domain check for log2(a)
+        argument = 1;
+    }
+    return (int) ceil(log2(argument));
 }
 
 char* BuddyAllocator::alloc(int _length) {
     // go to smallest slot possible in free list and search until a free block is found
     int smallest_index = getFreeListIndex(_length);
-    cout << "alloc smallest index = " << smallest_index << endl;
+//    cout << "alloc smallest index = " << smallest_index << endl;
     if(!free_list[smallest_index].empty()) { // if the first slot available has some free
         BlockHeader* block = free_list[smallest_index].back();
         if(!free_list[smallest_index].empty())
             free_list[smallest_index].remove(block);
         // return raw block
-        cout << "Removed block of size " << block->size << " from free list." << endl;
+//        cout << "Removed block of size " << block->size << " from free list." << endl;
         return getRawFromHeader(block);
     }
-    cout << "alloc smallest index + 1 = " << smallest_index + 1 << endl;
+//    cout << "alloc smallest index + 1 = " << smallest_index + 1 << endl;
     for(int i = smallest_index + 1; i <= largest_block_index; i++) {
         if(!free_list[i].empty()) {
             BlockHeader* block = free_list[i].back();
@@ -171,9 +180,6 @@ char* BuddyAllocator::alloc(int _length) {
 
 int BuddyAllocator::free(char* _a) {
     // get the blockheader, add it to the free list or merge with its buddy in the free list
-    if(!_a) {
-        return -1;
-    }
     BlockHeader* block = getHeaderFromRaw(_a);
     BlockHeader* buddy = getbuddy(block);
     int free_list_index = getFreeListIndex(block->size);
@@ -226,16 +232,27 @@ void BuddyAllocator::splitTest() {
 }
 
 void BuddyAllocator::allocTest() {
-    std::cout << "basic alloc test: " << endl;
-    cout << "head: " << memory_block_head << endl;
+    std::cout << "simple alloc test -- ";
     char* a = alloc(100);
     void* a_test = (void*)((pointer_arithmetic_t)a - (pointer_arithmetic_t)memory_block_head);
     assert(a_test == (void*)0x390);
-    printFreeListState();
+//    printFreeListState();
     char* b = alloc(4);
     void* b_test = (void*)((pointer_arithmetic_t)b - (pointer_arithmetic_t)memory_block_head);
     assert(b_test == (void*)0x310);
-    printFreeListState();
+//    printFreeListState();
+    char* c = alloc(466);
+    void* c_test = (void*)((pointer_arithmetic_t)c - (pointer_arithmetic_t)memory_block_head);
+    assert(c_test == (void*)0x10);
+//    printFreeListState();
+    char* d = alloc(100);
+    void* d_test = (void*)((pointer_arithmetic_t)d - (pointer_arithmetic_t)memory_block_head);
+    assert(d_test == (void*)0x290);
+//    printFreeListState();
+    char* e = alloc(112);
+    void* e_test = (void*)((pointer_arithmetic_t)e - (pointer_arithmetic_t)memory_block_head);
+    assert(e_test == (void*)0x210);
+//    printFreeListState();
     cout << "PASSED" << endl;
 }
 
