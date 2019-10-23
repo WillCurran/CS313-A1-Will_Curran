@@ -1,4 +1,9 @@
-Here comes the source code for PA1. The following files are included:
+This is a project completed by Will Curran, a student at Texas A&M University, for CSCE 313. It is not intended to be a resource for other students of this class.
+
+Objective: Create a buddy-system memory allocator and test it with the provided Ackerman function.
+
+
+Given info to students:
 
 -- Ackerman.h and .cpp : These files contain the Ackerman class that is to exercise your allocator. Call the function Ackerman::test() from your Main.cpp.
 

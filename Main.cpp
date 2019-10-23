@@ -5,7 +5,7 @@
 
 int main(int argc, char ** argv) {
 
-    int basic_block_size = 128, memory_length = 512 * 1024;
+    int basic_block_size = 128, memory_length = 64 * 1024 * 1024;
     
     int option;
     int errflag = 0;
